@@ -61,16 +61,24 @@ npm run dev
 npm run dev:socket
 ```
 
-### 5. Docker
+### 5. Docker（含 Nginx 反向代理）
 
 ```bash
-# 確保 .env 或環境變數已設定（含 Firebase、FIREBASE_SERVICE_ACCOUNT）
+# 複製 .env.example 為 .env 並填入 Firebase 等變數
+cp .env.example .env
+
+# 啟動（對外只開 80，由 Nginx 轉發到 app / socket）
 docker compose up --build
 ```
 
-會啟動兩個服務：
-- **app** (port 3000) - Next.js
-- **socket** (port 3001) - Socket.IO
+會啟動三個服務：
+- **nginx** (port 80) - 反向代理，對外唯一入口
+- **app** - Next.js
+- **socket** - Socket.IO（/socket.io/ 經 Nginx 轉發）
+
+**使用其他網域時**：在 `.env` 設定以下兩個為你的網址（例如 `https://chat.example.com`），再執行 `docker compose up --build`（改動後需重新 build 才會寫入前端）：
+- `NEXT_PUBLIC_SOCKET_URL`
+- `SOCKET_CORS_ORIGIN`
 
 可選：設定 `SOCKET_EMIT_SECRET` 保護 Socket 的內部 emit API。
 

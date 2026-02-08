@@ -13,13 +13,30 @@ import {
 } from "./lib";
 
 const SOCKET_PORT = parseInt(process.env.SOCKET_PORT || "3001", 10);
-const CORS_ORIGIN = process.env.SOCKET_CORS_ORIGIN || "http://localhost:3000";
+// 支援多個來源：env 用逗號分隔，例如 SOCKET_CORS_ORIGIN="http://localhost,http://127.0.0.1"
+const CORS_ORIGIN_RAW = process.env.SOCKET_CORS_ORIGIN || "http://localhost:3000";
+const CORS_ORIGIN = CORS_ORIGIN_RAW.split(",").map((s) => s.trim()).filter(Boolean);
+console.log("CORS_ORIGIN", CORS_ORIGIN);
 
 interface SocketWithUserId {
   userId?: string;
 }
 
 const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+  // 在 CORS 之前：印出每個請求的 IP / 來源
+  const forwarded = req.headers["x-forwarded-for"];
+  const ip =
+    typeof forwarded === "string"
+      ? forwarded.split(",")[0].trim()
+      : req.socket.remoteAddress;
+  console.log("[Socket] request", {
+    method: req.method,
+    url: req.url,
+    ip,
+    remoteAddress: req.socket.remoteAddress,
+    "x-forwarded-for": req.headers["x-forwarded-for"],
+  });
+
   if (req.method === "POST" && req.url === "/internal/emit") {
     return handleEmitRequest(req, res);
   }
@@ -31,7 +48,7 @@ const io = new Server(httpServer, {
   path: "/socket.io",
   addTrailingSlash: false,
   cors: {
-    origin: CORS_ORIGIN,
+    origin: CORS_ORIGIN.length ? CORS_ORIGIN : ["http://localhost:3000"],
     methods: ["GET", "POST"],
   },
 });
