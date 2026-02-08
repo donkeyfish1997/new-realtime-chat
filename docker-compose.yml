@@ -35,8 +35,7 @@ services:
   socket:
     build: .
     command: npx tsx socket-server/server.ts
-    ports:
-      - "3001:3001"
+    # 不對外暴露 port，僅由 Nginx 轉發 /socket.io/
     environment:
       - NODE_ENV=production
       - SOCKET_PORT=3001

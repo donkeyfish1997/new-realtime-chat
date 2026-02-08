@@ -85,7 +85,11 @@ docker compose up --build
 
 **本機 HTTPS**：用 `https://localhost` 或 `https://127.0.0.1` 開啟（自簽憑證需在瀏覽器手動信任）。`.env` 請設 `NEXT_PUBLIC_SOCKET_URL=https://localhost`、`SOCKET_CORS_ORIGIN=https://localhost`（或逗號分隔多個），再 `docker compose up --build`。
 
-**正式環境**：DNS 指到此機 80 後，執行 `DOMAIN=你的網域 EMAIL=你的信箱 ./scripts/generate-ssl-cert.sh`，腳本會用 certbot 取得 Let's Encrypt 憑證並寫入 `nginx/ssl/`，再重載 Nginx 即可。
+**正式環境**（Let's Encrypt 需要 Nginx 先跑在 80 上，驗證才能通過）：
+1. 先產生自簽憑證讓 Nginx 能啟動：`./scripts/generate-ssl-cert.sh`（不設 DOMAIN/EMAIL）
+2. 啟動服務：`docker compose up -d`
+3. DNS 已指到此機 80 後，再取得正式憑證：`DOMAIN=你的網域 EMAIL=你的信箱 ./scripts/generate-ssl-cert.sh`
+4. 重載 Nginx：`docker compose exec nginx nginx -s reload`
 
 可選：設定 `SOCKET_EMIT_SECRET` 保護 Socket 的內部 emit API。
 
