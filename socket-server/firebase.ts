@@ -35,5 +35,6 @@ function getAdminAuth(): Auth {
 export async function verifyIdToken(token: string): Promise<{ uid: string }> {
   const auth = getAdminAuth();
   const decoded = await auth.verifyIdToken(token);
+  
   return { uid: decoded.uid };
 }

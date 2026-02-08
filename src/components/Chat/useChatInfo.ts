@@ -9,9 +9,8 @@ import { getRandomAvatarUrl } from "@/utils/avatar";
 import type { ChatSummary, MessageItem } from "./UserList";
 
 interface ChatInfo {
-  partner: { id: string; name: string; image: string | null };
+  partner: { id: string; name: string; image: string };
   unreadCount: number;
-  // isOnline: boolean;
   messages: MessageItem[];
 }
 
@@ -72,19 +71,23 @@ function chatInfoReducer(
       const idx = state.findIndex((c) => c.partner.id === action.payload.partnerId);
       if (idx === -1) return;
       const info = state[idx];
-      if (action.payload.type === "replace") {
-        info.messages.length = 0;
-        info.messages.push(...action.payload.messages);
-      } else if (action.payload.type === "history") {
-        info.messages.push(...action.payload.messages);
-      } else {
-        const [removed] = state.splice(idx, 1);
-        state.unshift(removed);
-        removed.messages = [...action.payload.messages, ...removed.messages];
-        const newUnread = action.payload.messages.filter(
-          (m) => m.status !== "READ" && m.sender_id === action.payload.partnerId
-        ).length;
-        removed.unreadCount += newUnread;
+      switch (action.payload.type) {
+        case "replace":
+          info.messages.length = 0;
+          info.messages.push(...action.payload.messages);
+          break;
+        case "history":
+          info.messages.push(...action.payload.messages);
+          break;
+        case "new":
+          const [removed] = state.splice(idx, 1);
+          state.unshift(removed);
+          removed.messages = [...action.payload.messages, ...removed.messages];
+          const newUnread = action.payload.messages.filter(
+            (m) => m.status !== "READ" && m.sender_id === action.payload.partnerId
+          ).length;
+          removed.unreadCount += newUnread;
+          break;
       }
       return;
     }
@@ -121,7 +124,7 @@ function chatInfoReducer(
       return;
     }
     default:
-      return;
+      throw new Error(`Unknown action type: ${action satisfies never}`);
   }
 }
 

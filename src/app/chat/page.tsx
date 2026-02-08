@@ -55,10 +55,7 @@ export default function ChatPage() {
     <Stack
       direction="row"
       sx={{
-        margin: -2,
-        marginTop: 0,
         height: "100vh",
-        width: `calc(100% + 32px)`,
         overflow: "hidden",
       }}
     >

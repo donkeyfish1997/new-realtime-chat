@@ -27,7 +27,6 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      console.log("Login with email and password", email, password);
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/chat");
       router.refresh();

@@ -15,6 +15,7 @@ import {
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { getRandomAvatarUrl } from "@/utils/avatar";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,14 +25,14 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
       if (name) {
-        await updateProfile(user, { displayName: name });
+        await updateProfile(user, { displayName: name,"photoURL":getRandomAvatarUrl(user.uid) });
       }
       await setDoc(doc(db, "users", user.uid), {
         displayName: name || user.email?.split("@")[0] || "User",
