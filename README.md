@@ -61,24 +61,31 @@ npm run dev
 npm run dev:socket
 ```
 
-### 5. Docker（含 Nginx 反向代理）
+### 5. Docker（含 Nginx 反向代理 + SSL）
 
 ```bash
 # 複製 .env.example 為 .env 並填入 Firebase 等變數
 cp .env.example .env
 
-# 啟動（對外只開 80，由 Nginx 轉發到 app / socket）
+# 第一次：產生 SSL 憑證（二選一）
+chmod +x scripts/generate-ssl-cert.sh
+# 本機開發：自簽憑證（直接執行）
+./scripts/generate-ssl-cert.sh
+# 正式環境：Let's Encrypt（先讓 Nginx 跑起來、DNS 指到此機 80 後）
+# DOMAIN=chat.example.com EMAIL=admin@example.com ./scripts/generate-ssl-cert.sh
+
+# 啟動（對外 80→HTTPS 轉址、443 HTTPS，由 Nginx 轉發到 app / socket）
 docker compose up --build
 ```
 
 會啟動三個服務：
-- **nginx** (port 80) - 反向代理，對外唯一入口
+- **nginx** (80, 443) - 反向代理，80 自動轉址到 HTTPS，443 提供 SSL
 - **app** - Next.js
 - **socket** - Socket.IO（/socket.io/ 經 Nginx 轉發）
 
-**使用其他網域時**：在 `.env` 設定以下兩個為你的網址（例如 `https://chat.example.com`），再執行 `docker compose up --build`（改動後需重新 build 才會寫入前端）：
-- `NEXT_PUBLIC_SOCKET_URL`
-- `SOCKET_CORS_ORIGIN`
+**本機 HTTPS**：用 `https://localhost` 或 `https://127.0.0.1` 開啟（自簽憑證需在瀏覽器手動信任）。`.env` 請設 `NEXT_PUBLIC_SOCKET_URL=https://localhost`、`SOCKET_CORS_ORIGIN=https://localhost`（或逗號分隔多個），再 `docker compose up --build`。
+
+**正式環境**：DNS 指到此機 80 後，執行 `DOMAIN=你的網域 EMAIL=你的信箱 ./scripts/generate-ssl-cert.sh`，腳本會用 certbot 取得 Let's Encrypt 憑證並寫入 `nginx/ssl/`，再重載 Nginx 即可。
 
 可選：設定 `SOCKET_EMIT_SECRET` 保護 Socket 的內部 emit API。
 
